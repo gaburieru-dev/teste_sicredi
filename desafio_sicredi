@@ -1,0 +1,117 @@
+import sqlite3
+from openpyxl import Workbook
+
+def criar_tabela():
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    # Cria uma tabela chamada 'usuarios' com os campos 'id', 'nome', 'idade' e 'sexo'
+    cursor.execute('''CREATE TABLE IF NOT EXISTS usuarios (
+                        id INTEGER PRIMARY KEY,
+                        nome TEXT NOT NULL,
+                        idade INTEGER NOT NULL,
+                        sexo TEXT NOT NULL
+                    )''')
+
+    conexao.commit()
+    conexao.close()
+
+def criar_usuario(nome, idade, sexo):
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    cursor.execute('INSERT INTO usuarios (nome, idade, sexo) VALUES (?, ?, ?)', (nome, idade, sexo))
+
+    conexao.commit()
+    conexao.close()
+
+def buscar_usuario_por_id(id):
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM usuarios WHERE id = ?', (id,))
+    usuario = cursor.fetchone()
+
+    conexao.close()
+
+    return usuario
+
+def atualizar_usuario(id, nome, idade):
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    cursor.execute('UPDATE usuarios SET nome = ?, idade = ? WHERE id = ?', (nome, idade, id))
+
+    conexao.commit()
+    conexao.close()
+
+def deletar_usuario(id):
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    cursor.execute('DELETE FROM usuarios WHERE id = ?', (id,))
+
+    conexao.commit()
+    conexao.close()
+
+def salvar_em_excel():
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM usuarios')
+    usuarios = cursor.fetchall()
+
+    conexao.close()
+
+    # Cria uma nova planilha Excel
+    workbook = Workbook()
+    sheet = workbook.active
+
+    # Adiciona os cabeçalhos na primeira linha da planilha
+    sheet.append(['id', 'nome', 'idade', 'sexo'])
+
+    # Escreve os dados do banco de dados na planilha
+    for usuario in usuarios:
+        sheet.append(usuario)
+
+    # Salva a planilha no arquivo 'usuarios.xlsx'
+    workbook.save('teste.xlsx')
+
+def listar_colunas():
+    conexao = sqlite3.connect('exemplo_crud.db')
+    cursor = conexao.cursor()
+
+    cursor.execute("PRAGMA table_info(usuarios)")
+    colunas = cursor.fetchall()
+
+    conexao.close()
+
+    for coluna in colunas:
+        print(coluna)
+    
+
+if __name__ == '__main__':
+    criar_tabela()
+
+    # Criação de usuários
+    criar_usuario('Gabriel', 24, 'Masculino')
+    criar_usuario('Yuri', 39, 'Masculino')
+    criar_usuario('Igor', 28, 'Masculino')
+
+    # Busca e atualização de usuário
+    usuario = buscar_usuario_por_id(1)
+    print(f'Usuário encontrado: {usuario}')
+
+    # Atualiza o nome e a idade do usuário com id=1
+    atualizar_usuario(1, 'Gabriel Dariva', 25)
+
+    usuario_atualizado = buscar_usuario_por_id(1)
+    print(f'Usuário atualizado: {usuario_atualizado}')
+
+    # Exclusão de usuário
+    deletar_usuario(2)
+    usuarios_restantes = buscar_usuario_por_id(2)
+    print(f'Usuários restantes: {usuarios_restantes}')
+
+    # Salvar em Excel após todas as operações
+    salvar_em_excel()
